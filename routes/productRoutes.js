@@ -5,14 +5,11 @@ const productController = require('../controllers/productController');
 // GET - جلب كل المنتجات
 router.get('/', productController.getProducts);
 
-// POST - إضافة منتج
-router.post(
-    '/',
+// POST - إضافة منتج (مع middleware التسجيل)
+router.post('/', 
     (req, res, next) => {
         if (!req.session.userId) {
-            return res.status(401).json({
-                message: "You must be logged in to add a product"
-            });
+            return res.status(401).json({ message: "You must be logged in to add a product" });
         }
         next();
     },
