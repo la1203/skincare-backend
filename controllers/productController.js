@@ -72,29 +72,31 @@ exports.createProduct = async (req, res) => {
     }
 };
 
-// تعديل منتج - أي مستخدم مسجل دخول يقدر يعدل
+// تعديل منتج - فقط صاحب المنتج يقدر يعدل
 exports.updateProduct = async (req, res) => {
     try {
-
         if (!req.session.userId) {
-            return res.status(401).json({
-                message: "You must login first"
-            });
+            return res.status(401).json({ message: "You must login first" });
         }
 
         const { id } = req.params;
+
+        // جلب المنتج عشان نتأكد إنه ملك للمستخدم
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // التحقق: هل المستخدم هو صاحب المنتج؟
+        if (product.creatorId.toString() !== req.session.userId.toString()) {
+            return res.status(403).json({ message: "You can only edit your own products!" });
+        }
 
         const updatedProduct = await Product.findByIdAndUpdate(
             id,
             req.body,
             { new: true }
         );
-
-        if (!updatedProduct) {
-            return res.status(404).json({
-                message: "Product not found"
-            });
-        }
 
         res.json(updatedProduct);
 
@@ -108,25 +110,27 @@ exports.updateProduct = async (req, res) => {
     }
 };
 
-// حذف منتج - أي مستخدم مسجل دخول يقدر يحذف
+// حذف منتج - فقط صاحب المنتج يقدر يحذف
 exports.deleteProduct = async (req, res) => {
     try {
-
         if (!req.session.userId) {
-            return res.status(401).json({
-                message: "You must login first"
-            });
+            return res.status(401).json({ message: "You must login first" });
         }
 
         const { id } = req.params;
 
-        const deletedProduct = await Product.findByIdAndDelete(id);
-
-        if (!deletedProduct) {
-            return res.status(404).json({
-                message: "Product not found"
-            });
+        // جلب المنتج عشان نتأكد إنه ملك للمستخدم
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
         }
+
+        // التحقق: هل المستخدم هو صاحب المنتج؟
+        if (product.creatorId.toString() !== req.session.userId.toString()) {
+            return res.status(403).json({ message: "You can only delete your own products!" });
+        }
+
+        await Product.findByIdAndDelete(id);
 
         res.json({
             message: "Product deleted successfully"
