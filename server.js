@@ -12,8 +12,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 // إعدادات CORS (تسمح بـ 3000 و 3001)
+// قديم
 app.use(cors({
     origin: ['http://localhost:3000', 'http://localhost:3001'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+}));
+
+// جديد
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://skincare-frontend-1909.onrender.com'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
 }));

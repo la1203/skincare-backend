@@ -1,5 +1,13 @@
 const Product = require('../models/Product');
 
+// Middleware للتسجيل - مطلوب في المشروع
+exports.logPostMiddleware = (req, res, next) => {
+    const timestamp = new Date().toISOString();
+    const userId = req.session.userId || 'Unknown';
+    console.log(`[${timestamp}] POST request by User ID: ${userId}`);
+    next();
+};
+
 // جلب كل المنتجات مع الفلترة والترتيب
 exports.getProducts = async (req, res) => {
     try {
@@ -33,6 +41,46 @@ exports.createProduct = async (req, res) => {
         });
         const savedProduct = await newProduct.save();
         res.status(201).json(savedProduct);
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// تعديل منتج - فقط صاحبه
+exports.updateProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const product = await Product.findOne({ 
+            _id: id, 
+            creatorId: req.session.userId 
+        });
+
+        if (!product) {
+            return res.status(403).json({ message: "Not authorized or product not found" });
+        }
+
+        const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true });
+        res.json(updatedProduct);
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// حذف منتج - فقط صاحبه
+exports.deleteProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const product = await Product.findOne({ 
+            _id: id, 
+            creatorId: req.session.userId 
+        });
+
+        if (!product) {
+            return res.status(403).json({ message: "Not authorized or product not found" });
+        }
+
+        await Product.findByIdAndDelete(id);
+        res.json({ message: "Product deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
